@@ -70,9 +70,20 @@ def load_tables():
 
 @st.cache_resource
 def load_models():
+    import gc
     cfg = json.load(open(ROOT / "models/feature_config.json"))
-    models = {name: joblib.load(ROOT / f"models/{f}.pkl") for name, f in MODEL_FILES.items()}
-    return cfg, models
+    models = {}
+    for name, f in MODEL_FILES.items():
+        mdl = joblib.load(ROOT / f"models/{f}.pkl")
+        if hasattr(mdl, "n_jobs"):
+            mdl.n_jobs = 1
+        models[name] = mdl
+    arma_info = joblib.load(ROOT / "models/arma_params.pkl")["arma_params"]
+    rf_resid_mdl = joblib.load(ROOT / "models/arma_rf_residual.pkl")
+    if hasattr(rf_resid_mdl, "n_jobs"):
+        rf_resid_mdl.n_jobs = 1
+    gc.collect()
+    return cfg, models, arma_info, rf_resid_mdl
 
 
 metrics, by_zone, by_season, imp, weights, rf_curve, xgb_curve, test, clim, cities = load_tables()
@@ -173,81 +184,108 @@ elif page == "Model comparison":
     c2.bar_chart(imp[which].sort_values(ascending=False).head(12), horizontal=True)
 
 elif page == "Why models behave this way":
-    st.title("Interpretation: Why Each Model Behaves the Way It Does")
+    st.title("Why Each Model Behaves the Way It Does")
     st.write(
-        "This section explains the mathematical and meteorological reasons behind our test results "
-        "(2023-2024 unseen data across 12 Sri Lankan cities)."
+        "When we tested all 17 models on two full years of unseen Sri Lankan weather (2023 and 2024), "
+        "each type of model behaved differently. Here is what happened and why, in plain terms."
     )
 
     st.subheader("1. Why a Single Decision Tree Failed (R² = -0.143) while Bagging Worked (RMSE = 8.15 mm)")
     st.markdown(
-        "- **Daily rain is noisy:** Two afternoons in Colombo or Ratnapura can have nearly identical humidity (84%) "
-        "and cloud cover (80%), yet one gets 5 mm of rain and the other gets 35 mm due to a local rain cloud.\n"
-        "- **Why a single tree fails:** A single deep tree keeps splitting until it memorizes extreme storms in the "
-        "2015-2022 training years. On unseen 2023-2024 days, whenever a day lands in one of those extreme leaves, "
-        "the tree predicts a huge storm, giving an RMSE of **11.10 mm** (worse than guessing the monthly average, **9.49 mm**).\n"
-        "- **Why Bagging and Random Forest fix this:** Bagging (`8.19 mm` RMSE) averages 100 deep trees trained on "
-        "bootstrap samples so extreme errors cancel out (reducing **variance**). **Random Forest** (`8.15 mm` RMSE) "
-        "also restricts each split to 40% of features (`max_features=0.4`), forcing trees to use humidity, pressure "
-        "change, wind direction, and solar radiation instead of always splitting on today's rain first. **Extra Trees** "
-        "(`8.18 mm` RMSE, `4.63 mm` MAE) randomizes split cut-offs too, giving smoother predictions on normal days."
+        "Imagine two afternoons in Colombo or Ratnapura. On paper, both days look almost the same—around 84% "
+        "humidity and 80% cloud cover. Yet one day gets 5 mm of rain and the other gets 35 mm because a heavy "
+        "rain cloud passed right over the weather station.\n\n"
+        "- **What goes wrong with a single tree:** A single deep decision tree keeps splitting the 2015–2022 "
+        "training data into tiny groups until it memorizes those big storm days. When we give it new days from "
+        "2023–2024, whenever a day lands in one of those memorized branches, the tree predicts a huge storm. "
+        "Because it makes wild jumps, its average error (**11.10 mm**) is actually worse than just guessing the "
+        "normal monthly average every single day (**9.49 mm**). That is why its R² score is negative (`-0.143`).\n"
+        "- **How Bagging and Random Forest fix this:** Instead of trusting one jumpy tree, **Bagging** (`8.19 mm` RMSE) "
+        "trains 100 deep trees on different random samples of the data and averages their answers. One tree might "
+        "guess too high and another too low, so averaging cancels out the extreme mistakes.\n"
+        "- **Why Random Forest (`8.15 mm`) is even better than plain Bagging:** In plain bagging, almost every tree "
+        "still picks today's rain (`rain`) and rain hours (`rain_hours`) as its very first question, so the trees act "
+        "too much alike. **Random Forest** only lets each split look at 40% of the features at random. That forces "
+        "many trees to look at humidity, air pressure change, wind direction, or sunshine instead. Because the trees "
+        "now think differently from each other, their average is much steadier. **Extra Trees** (`8.18 mm` RMSE, "
+        "`4.63 mm` MAE) also picks the cut-off numbers at random, which makes its everyday guesses even smoother."
     )
 
     st.subheader("2. Bagging vs. Boosting (Random Forest vs. Gradient Boosting, XGBoost, LightGBM, CatBoost)")
     st.markdown(
-        "- **Why Boosting can overfit weather data:** Boosting trains shallow trees one after another on the leftover "
-        "errors (residuals). In rainfall data, the largest residuals are sudden tropical downpours (80+ mm) that cannot "
-        "be predicted from daily averages. In our 1,500-round XGBoost experiment, training RMSE dropped to `4.35 mm` "
-        "while test RMSE got worse after ~150 rounds (`8.39 mm`) because later trees chased random storm noise.\n"
-        "- **Why Walk-Forward Validation solved it:** Using 3-year walk-forward validation (2020, 2021, 2022) stopped "
-        "boosting early (`XGBoost: 83`, `LightGBM: 88`, `CatBoost: 166`, `Gradient Boosting: 96` trees), bringing all "
-        "boosted models down to **8.18-8.21 mm** RMSE.\n"
-        "- **Why CatBoost (8.18 mm RMSE, 4.65 mm MAE) led the boosting models:** CatBoost uses balanced (symmetric) "
-        "trees—which act as a natural brake against overfitting—and handles `city`, `zone`, and `season` categories "
-        "directly without one-hot encoding.\n"
-        "- **Why AdaBoost had the worst overall RMSE (8.79 mm) but the best Heavy-Rain MAE (18.49 mm):** AdaBoost "
-        "puts exponential weight on the biggest errors (heavy storms). That makes it over-predict rain on normal dry "
-        "days, but makes it the boldest and closest model when a real storm (≥ 25 mm) hits."
+        "Bagging builds trees side-by-side at the same time, so adding more trees never causes overfitting. "
+        "**Boosting** works in a chain: it builds small trees one after another, and each new tree tries to fix "
+        "the mistakes left behind by the trees before it.\n\n"
+        "- **Why Boosting can overfit weather data:** In our test where we let XGBoost run for 1,500 trees, the "
+        "training error kept dropping all the way down to `4.35 mm`, but the test error on 2023–2024 was best around "
+        "80–200 trees and then started getting **worse** (`8.39 mm`). Why? Because the biggest leftover mistakes in "
+        "Sri Lankan weather are sudden tropical downpours (80+ mm) that no model can predict from yesterday's daily "
+        "averages. After about 150 trees, boosting starts chasing random storm noise.\n"
+        "- **How we stopped it from overfitting:** We tested the boosted models across three validation years "
+        "(2020, 2021, and 2022) and stopped them at the point where validation error was lowest (`XGBoost: 83 trees`, "
+        "`LightGBM: 88 trees`, `CatBoost: 166 trees`, `Gradient Boosting: 96 trees`). With that early stop, all of "
+        "them performed well (**8.18 to 8.21 mm** RMSE).\n"
+        "- **Why CatBoost (`8.18 mm` RMSE, `4.65 mm` MAE) was the best boosted model:** First, CatBoost builds "
+        "balanced (symmetric) trees that use the exact same rule across an entire level, which naturally stops it "
+        "from memorizing a single freak storm. Second, we could feed it the Sri Lankan `city`, `zone`, and `season` "
+        "names directly without turning them into dozens of 0/1 columns.\n"
+        "- **The interesting case of AdaBoost (`8.79 mm` RMSE, but best Heavy-Rain MAE of `18.49 mm`):** After every "
+        "round, AdaBoost puts much heavier weight on the days it got most wrong. Because big storms have the biggest "
+        "errors in millimeters, AdaBoost quickly becomes obsessed with heavy rain days. That makes it predict too "
+        "much rain on normal dry days (hurting its overall RMSE), but when a real heavy storm (≥ 25 mm) actually "
+        "hits, AdaBoost's bold forecast is closer to the real number than any other model!"
     )
 
-    st.subheader("3. Why ARMA Alone Falls Short (8.45 mm) and How ARMA + Random Forest Fixes It (8.15 mm)")
+    st.subheader("3. Why Time-Series ARMA Alone Is Not Enough (8.45 mm) and How ARMA + Random Forest Fixes It (8.15 mm)")
     st.markdown(
-        "- **What ARMA(2,1) captures:** Every city has a positive first-lag weight (`ar.L1` between 1.13 and 1.35) and "
-        "a baseline matching its climate (`10.72 mm` in wet Ratnapura vs. `3.08 mm` in dry Hambantota). It captures "
-        "multi-day rainy spells.\n"
-        "- **Why ARMA alone is one day late:** ARMA only sees past rainfall numbers—it cannot see that today's air "
-        "pressure dropped (`pressure_chg_1d`), cloud cover hit 95%, or winds shifted.\n"
-        "- **How the Hybrid (ARMA + RF on residuals) works:** ARMA first models the linear time-series trend, and a "
-        "Random Forest predicts what ARMA missed (the residual) using all weather features. This lowers RMSE from "
-        "**8.45 mm to 8.15 mm** and lifts Rain-Day F1 from **0.795 to 0.831**."
+        "- **What ARMA(2,1) does well:** ARMA looks only at past rainfall numbers to spot day-to-day streaks. In our "
+        "fitted ARMA models, every city had a strong positive link to yesterday's rain (`ar.L1` around 1.13 to 1.35) "
+        "and a baseline level matching its climate (`10.72 mm` in wet Ratnapura vs. `3.08 mm` in dry Hambantota). "
+        "In simple words, ARMA knows that monsoon rain usually comes in multi-day spells.\n"
+        "- **Why ARMA alone is always one day late:** Because ARMA only reads past rainfall numbers, it is completely "
+        "blind to today's sky. It cannot see that air pressure just dropped, that clouds are at 95%, or that the wind "
+        "changed direction. So when a new storm arrives, ARMA misses the first day.\n"
+        "- **How the Hybrid (`ARMA + Random Forest`) combines the best of both:** We let ARMA make the initial "
+        "time-series guess, and then trained a Random Forest to predict what ARMA missed (the leftover error) using "
+        "humidity, clouds, wind direction, pressure change, and sunshine. That cut the error from **8.45 mm down to "
+        "8.15 mm** and improved Rain-Day F1 from **0.795 to 0.831**."
     )
 
-    st.subheader("4. Why Combining Trees with a Neural Network (RF + ANN and Stacking) Wins Overall")
+    st.subheader("4. Why Combining Trees with a Neural Network (RF + ANN and Stacking) Won First Place")
     st.markdown(
-        "- **Step functions vs. smooth curves:** Tree ensembles split data using sharp step thresholds, while our "
-        "Neural Network (`ANN (MLP)`, 64→32 ReLU units) fits a smooth surface across standardized inputs. On its own, "
-        "the ANN got a better MAE (`4.60 mm`) and Rain-Day F1 (`0.839`) than any single tree model.\n"
-        "- **Hybrid RF + ANN (8.113 mm RMSE, 4.552 mm MAE):** Because a tree ensemble and a neural network make "
-        "different kinds of errors, averaging them beats both Random Forest (`8.148 mm`) and ANN (`8.279 mm`).\n"
-        "- **Stacking (6 models → Ridge: 8.081 mm RMSE, R² = 0.394, Rain-Day F1 = 0.842):** The Ridge meta-learner "
-        "combines out-of-fold predictions from all 6 base learners:\n\n"
-        "  `y_stack = -0.412 + 0.307*ANN + 0.215*CatBoost + 0.172*XGBoost + 0.148*ExtraTrees + 0.130*RF + 0.120*LightGBM`\n\n"
-        "  It gives positive weight to **all three paradigms** (~31% Neural Network, ~51% Boosting, ~28% Bagging) and "
-        "achieves the lowest RMSE across all three Sri Lankan climatic zones (Wet: `8.48 mm`, Intermediate: `7.75 mm`, "
-        "Dry: `7.80 mm`) and during the stormy Second Inter-Monsoon in Oct-Nov (`13.52 mm`)."
+        "- **Trees and Neural Networks think in different shapes:** Decision trees cut the data using sharp yes/no "
+        "boxes (like `rain_hours > 6` and `zone == Wet`), so their predictions jump in steps. Our Neural Network "
+        "(`ANN (MLP)`) blends all the weather numbers together along a smooth curve. Even though the ANN on its own "
+        "had a slightly higher RMSE (`8.28 mm`), its smooth predictions gave a **better MAE (`4.60 mm`) and a better "
+        "Rain-Day F1 (`0.839`)** than any individual tree model.\n"
+        "- **Why `Hybrid: RF + ANN` (`8.113 mm` RMSE, `4.552 mm` MAE) beats both:** Because a step-shaped tree model "
+        "and a smooth neural network make different mistakes on different days, simply averaging their two answers "
+        "is more accurate than either Random Forest (`8.148 mm`) or the ANN (`8.279 mm`) alone.\n"
+        "- **Why `Stacking (6 models → Ridge)` came #1 overall (`8.081 mm` RMSE, R² = `0.394`, Rain-Day F1 = `0.842`):** "
+        "Instead of a simple 50/50 average, Stacking uses a Ridge Regression model (trained on 5-fold out-of-fold "
+        "predictions) to learn how much to trust each of the 6 base models:\n\n"
+        "  `Forecast = -0.412 + 0.307*(ANN) + 0.215*(CatBoost) + 0.172*(XGBoost) + 0.148*(ExtraTrees) + 0.130*(RandomForest) + 0.120*(LightGBM)`\n\n"
+        "  Notice that the meta-learner did not pick just one winner—it shared the job across **all three families**: "
+        "about **31% Neural Network**, **51% Boosting**, and **28% Bagging**, plus a small `-0.41 mm` offset that trims "
+        "tiny false-drizzle guesses on dry days. Because it blends all three styles, Stacking had the lowest error in "
+        "**all three Sri Lankan climatic zones** (Wet: `8.48 mm`, Intermediate: `7.75 mm`, Dry: `7.80 mm`) and during "
+        "the stormy **October–November Second Inter-Monsoon** (`13.52 mm`)."
     )
 
-    st.subheader("5. What Feature Importance Tells Us About Sri Lankan Monsoons")
+    st.subheader("5. What the Top Features Tell Us About Real Sri Lankan Weather")
     st.markdown(
-        "1. **Today's rain & wet-spell history (`rain`, `rain_hours`, `rain_lag1`, `rain_lag3`):** Monsoon systems last "
-        "multiple days.\n"
-        "2. **Monsoon wind direction (`wind_dir_cos`, `wind_dir_sin` - ranked #3 in Stacking permutation importance):** "
-        "Separates South-West monsoon winds off the Indian Ocean (hitting Colombo, Galle, Ratnapura) from North-East "
-        "monsoon winds off the Bay of Bengal (hitting Trincomalee, Batticaloa, Jaffna).\n"
-        "3. **Sunshine, clouds, and temperature (`radiation`, `cloud_cover`, `temp_max`, `et0`):** Separate clear "
-        "dry days from overcast monsoon skies.\n"
-        "4. **24-hour pressure change (`pressure_chg_1d` - ranked #5 in Stacking):** A falling barometer warns of an "
-        "approaching low-pressure trough or depression."
+        "When we checked which features mattered most across Random Forest, XGBoost, and Stacking permutation "
+        "importance, four real-world weather signals came out on top:\n\n"
+        "1. **Today's rain and recent wet days (`rain`, `rain_hours`, `rain_lag1`, `rain_lag3`):** Monsoon systems "
+        "and low-pressure troughs usually last several days in a row.\n"
+        "2. **Monsoon wind direction (`wind_dir_cos`, `wind_dir_sin` — ranked #3 in Stacking):** Wind direction tells "
+        "the model whether wet air is blowing from the south-west off the Indian Ocean (bringing rain to Colombo, "
+        "Galle, and Ratnapura) or from the north-east off the Bay of Bengal (bringing rain to Trincomalee, Batticaloa, "
+        "and Jaffna).\n"
+        "3. **Sunshine, clouds, and daytime temperature (`radiation`, `cloud_cover`, `temp_max`, `et0`):** Bright sun "
+        "and high evaporation point to dry air, while thick clouds and cooler daytime highs signal an active monsoon sky.\n"
+        "4. **24-hour air pressure drop (`pressure_chg_1d` — ranked #5 in Stacking):** A drop in sea-level pressure "
+        "from yesterday to today is a classic sign of an approaching tropical depression."
     )
 
 elif page == "Test set check (2023-2024)":
@@ -291,9 +329,7 @@ elif page == "Predict tomorrow's rain":
     st.title("Predict tomorrow's rain (Live model calculator)")
     st.write("Enter today's weather readings below to get a live forecast for **tomorrow's rainfall** from all "
              "11 trained models (including the ARMA + Random Forest hybrid, RF + ANN hybrid, and Stacking ensemble).")
-    cfg, models = load_models()
-    arma_info = joblib.load(ROOT / "models/arma_params.pkl")["arma_params"]
-    rf_resid_mdl = joblib.load(ROOT / "models/arma_rf_residual.pkl")
+    cfg, models, arma_info, rf_resid_mdl = load_models()
 
     c1, c2 = st.columns(2)
     city = c1.selectbox("City", sorted(test.city.unique()))
