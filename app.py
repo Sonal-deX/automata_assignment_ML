@@ -103,8 +103,7 @@ page = st.sidebar.radio(
     ],
 )
 st.sidebar.markdown("---")
-st.sidebar.caption("Data: ERA5 reanalysis via Open-Meteo, 12 cities, 2015-2024.\n\n"
-                   "Generated with Claude / Copilot / GPT via Antigravity.")
+st.sidebar.caption("Data: ERA5 reanalysis via Open-Meteo, 12 cities, 2015-2024.")
 
 # ------------------------------------------------------------------ pages
 if page == "Overview":
@@ -405,6 +404,6 @@ Badulla, Anuradhapura, Jaffna, Trincomalee, Batticaloa, Hambantota), 2015-2024, 
 
 **Files.** The full analysis is in `ensemble_rainfall_sri_lanka.ipynb`. Trained models are in `models/` as pickle files.
 
-**AI declaration.** Code and frontend generated with GPT/Copilot/Claude (Claude & Gemini via the Google Antigravity
-coding assistant), then reviewed and tested by me. The comparison and interpretation of the results are my own.
+**AI declaration.** Code and frontend generated with Claude via Antigravity, then reviewed and tested by me.
+The comparison and interpretation of the results are my own.
 """)

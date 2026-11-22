@@ -7,7 +7,7 @@
 ---
 
 > **AI Usage Declaration (Required by Assignment Guidelines)**  
-> Code and front end generated with GPT/Copilot/Claude (specifically Claude and Gemini via the Google Antigravity coding assistant). All code, experimental design, and outputs were executed, verified, and interpreted by the student.
+> Code and front end generated with Claude via Antigravity. All code, experimental design, and outputs were executed, verified, and interpreted by the student.
 
 ---
 
