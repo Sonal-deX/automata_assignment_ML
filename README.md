@@ -63,7 +63,6 @@ SL_Weather_Ensemble_ML/
 ├── app.py                                 # Streamlit interactive dashboard (frontend + ML pickle backend)
 ├── ensemble_rainfall_sri_lanka.ipynb      # Full Jupyter Notebook (EDA, training, charts, and deep interpretation)
 ├── requirements.txt                       # Python dependencies for local run & Streamlit Community Cloud
-├── VIDEO_SCRIPT_3MIN.md                   # 3-minute story/promo video script for the presentation
 ├── data/
 │   ├── fetch_weather.py                   # Script used to download 2015-2024 Sri Lankan data from Open-Meteo
 │   ├── raw/
