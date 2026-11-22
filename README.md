@@ -7,7 +7,7 @@
 ---
 
 > **AI Usage Declaration (Required by Assignment Guidelines)**  
-> The Python code in this repository (`ensemble_rainfall_sri_lanka.ipynb`, `app.py`, and `data/fetch_weather.py`) was **generated with Claude (Anthropic) and Gemini via the Google Antigravity coding assistant**. All code, experimental design, and outputs were executed, verified, and interpreted by the student.
+> Code and front end generated with GPT/Copilot/Claude (specifically Claude and Gemini via the Google Antigravity coding assistant). All code, experimental design, and outputs were executed, verified, and interpreted by the student.
 
 ---
 
