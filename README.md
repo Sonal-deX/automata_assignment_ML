@@ -7,8 +7,7 @@
 
 ---
 
-> **AI Usage Declaration (Required by Assignment Guidelines)**  
-> Code and front end generated with Claude via Antigravity. All code, experimental design, and outputs were executed, verified, and interpreted by the student.
+**AI declaration.** Code and frontend generated with Claude via Antigravity, then reviewed and tested by me. The comparison and interpretation of the results are my own.
 
 ---
 
