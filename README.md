@@ -2,6 +2,7 @@
 
 **Module:** Machine Learning - Ensemble Learning Assignment  
 **Student:** Attanayake AMSL (`224016H`)  
+**Live Hosted Dashboard:** https://automataassignmentml-dgz85rykfhwevvlamnghgz.streamlit.app/  
 **Dataset:** Real Daily Meteorological Data for 12 Sri Lankan Cities (2015-2024, 43,836 observations) via ECMWF ERA5 Reanalysis / Open-Meteo Historical Weather API.
 
 ---
@@ -98,28 +99,17 @@ SL_Weather_Ensemble_ML/
 
 ---
 
-## 4. How to Run Locally
+## 4. Live Hosted Dashboard & Local Execution
+
+### Live Dashboard
+- **Hosted Application URL:** https://automataassignmentml-dgz85rykfhwevvlamnghgz.streamlit.app/
+
+### How to Run Locally
 
 ```bash
-# 1. Install dependencies (or use the pre-created .venv)
+# 1. Install dependencies
 pip install -r requirements.txt
 
 # 2. Launch the Streamlit dashboard
 streamlit run app.py
 ```
-
----
-
-## 5. How to Push to GitHub & Host on Streamlit Community Cloud (Free)
-
-1. Create a new public repository on GitHub (e.g., `sri-lanka-rainfall-ensemble-ml`).
-2. Push this folder to GitHub:
-   ```bash
-   git init
-   git add .
-   git commit -m "Sri Lanka rainfall ensemble learning notebook and dashboard"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/sri-lanka-rainfall-ensemble-ml.git
-   git push -u origin main
-   ```
-3. Go to [https://share.streamlit.io](https://share.streamlit.io), sign in with GitHub, click **Create app**, choose your repository, set **Main file path** to `app.py`, and click **Deploy**.
