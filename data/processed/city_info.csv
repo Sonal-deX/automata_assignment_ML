@@ -1,0 +1,13 @@
+city,zone,latitude,longitude,elevation,avg_annual_rain_mm,rainy_days_pct
+Anuradhapura,Dry,8.3114,80.4037,90.0,1489.0,50.8
+Badulla,Intermediate,6.9934,81.055,661.0,2267.0,60.3
+Batticaloa,Dry,7.731,81.6747,4.0,1661.0,55.7
+Colombo,Wet,6.9271,79.8612,9.0,2836.0,76.5
+Galle,Wet,6.0535,80.221,3.0,2980.0,83.5
+Hambantota,Dry,6.1241,81.1185,8.0,1213.0,53.4
+Jaffna,Dry,9.6615,80.0255,9.0,1325.0,43.2
+Kandy,Wet,7.2906,80.6337,499.0,1760.0,62.8
+Kurunegala,Intermediate,7.4863,80.3647,124.0,2174.0,66.8
+Nuwara Eliya,Wet,6.9497,80.7891,1888.0,1954.0,68.1
+Ratnapura,Wet,6.6828,80.3992,34.0,3954.0,82.9
+Trincomalee,Dry,8.5874,81.2152,9.0,1500.0,47.0
