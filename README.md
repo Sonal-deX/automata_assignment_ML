@@ -1,8 +1,8 @@
 # Predicting Next-Day Rainfall in Sri Lanka with Ensemble Learning
 
-**Module:** Machine Learning — Ensemble Learning Assignment  
+**Module:** Machine Learning - Ensemble Learning Assignment  
 **Student:** Attanayake AMSL (`224016H`)  
-**Dataset:** Real Daily Meteorological Data for 12 Sri Lankan Cities (2015–2024, 43,836 observations) via ECMWF ERA5 Reanalysis / Open-Meteo Historical Weather API.
+**Dataset:** Real Daily Meteorological Data for 12 Sri Lankan Cities (2015-2024, 43,836 observations) via ECMWF ERA5 Reanalysis / Open-Meteo Historical Weather API.
 
 ---
 
@@ -18,7 +18,7 @@ This project predicts **tomorrow's daily rainfall (in mm)** across **12 cities i
 - **Intermediate Zone:** Kurunegala, Badulla
 - **Dry Zone:** Anuradhapura, Jaffna, Trincomalee, Batticaloa, Hambantota
 
-We compare and combine **17 models across 7 families** using a strict time-based split (**Train: 2015–2022 [34,980 rows]**, **Walk-Forward Validation: 2020–2022**, **Test: 2023–2024 [8,760 rows]**):
+We compare and combine **17 models across 7 families** using a strict time-based split (**Train: 2015-2022 [34,980 rows]**, **Walk-Forward Validation: 2020-2022**, **Test: 2023-2024 [8,760 rows]**):
 
 1. **Baselines:** Persistence (`today = tomorrow`), City-Month Climatology, Linear Regression, Single Decision Tree
 2. **Bagging:** Bagging (Decision Trees), Random Forest, Extra Trees
@@ -32,7 +32,7 @@ We compare and combine **17 models across 7 families** using a strict time-based
 
 ---
 
-## 2. Summary of Test Results (2023–2024, 8,760 Unseen City-Days)
+## 2. Summary of Test Results (2023-2024, 8,760 Unseen City-Days)
 
 | Model | Family | RMSE (mm) ↓ | MAE (mm) ↓ | R² ↑ | Rain-Day Acc ↑ | Rain-Day F1 ↑ | Heavy-Rain MAE (≥25 mm) ↓ |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -65,13 +65,13 @@ SL_Weather_Ensemble_ML/
 ├── requirements.txt                       # Python dependencies for local run & Streamlit Community Cloud
 ├── VIDEO_SCRIPT_3MIN.md                   # 3-minute story/promo video script for the presentation
 ├── data/
-│   ├── fetch_weather.py                   # Script used to download 2015–2024 Sri Lankan data from Open-Meteo
+│   ├── fetch_weather.py                   # Script used to download 2015-2024 Sri Lankan data from Open-Meteo
 │   ├── raw/
 │   │   └── sri_lanka_weather_daily.csv    # 43,836 raw daily weather records across 12 Sri Lankan cities
 │   └── processed/
 │       ├── city_info.csv                  # City coordinates, elevation, climatic zone, annual rainfall stats
 │       ├── monthly_climatology.csv        # Monthly average daily rainfall per city
-│       └── test_predictions.csv           # 2023–2024 test set with predictions from all 17 models
+│       └── test_predictions.csv           # 2023-2024 test set with predictions from all 17 models
 ├── models/
 │   ├── stacking.pkl                       # Trained StackingRegressor (6 base models -> Ridge)
 │   ├── random_forest.pkl                  # Trained RandomForestRegressor
