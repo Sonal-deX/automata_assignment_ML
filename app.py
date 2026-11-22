@@ -15,6 +15,12 @@ import streamlit as st
 
 ROOT = Path(__file__).parent
 st.set_page_config(page_title="Sri Lanka Rainfall - Ensemble ML", layout="wide")
+st.markdown(
+    "<style>"
+    "#MainMenu, header [data-testid='stToolbar'], [data-testid='stStatusWidget'], footer {display: none !important;}"
+    "</style>",
+    unsafe_allow_html=True,
+)
 
 MODEL_FILES = {
     "Random Forest": "random_forest",

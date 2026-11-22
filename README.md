@@ -13,22 +13,22 @@
 
 ## 1. Project Overview
 
-This project investigates **next-day daily rainfall forecasting (in mm)** across **12 cities in Sri Lanka** spanning all three climatic zones defined by the Department of Meteorology, Sri Lanka:
+This project predicts **tomorrow's daily rainfall (in mm)** across **12 cities in Sri Lanka** covering all three climatic zones defined by the Department of Meteorology, Sri Lanka:
 - **Wet Zone:** Colombo, Galle, Ratnapura, Kandy, Nuwara Eliya
 - **Intermediate Zone:** Kurunegala, Badulla
 - **Dry Zone:** Anuradhapura, Jaffna, Trincomalee, Batticaloa, Hambantota
 
-To satisfy the module's requirements on **Ensemble Learning** and **Hybridization**, we compare and combine **17 models across 7 families** using a strict chronological split (**Train: 2015–2022 [34,980 rows]**, **Walk-Forward Validation: 2020–2022**, **Unseen Test: 2023–2024 [8,760 rows]**):
+We compare and combine **17 models across 7 families** using a strict time-based split (**Train: 2015–2022 [34,980 rows]**, **Walk-Forward Validation: 2020–2022**, **Test: 2023–2024 [8,760 rows]**):
 
 1. **Baselines:** Persistence (`today = tomorrow`), City-Month Climatology, Linear Regression, Single Decision Tree
 2. **Bagging:** Bagging (Decision Trees), Random Forest, Extra Trees
 3. **Boosting:** AdaBoost, Gradient Boosting, XGBoost, LightGBM, CatBoost (using native categorical features for `city`, `zone`, `season`)
-4. **Neural Network:** Multi-Layer Perceptron (`MLPRegressor`, 64→32 ReLU units)
+4. **Neural Network:** Multi-Layer Perceptron (`MLPRegressor`, 64→32 ReLU layers)
 5. **Time-Series:** Per-city `ARMA(2,1)` one-step-ahead forecasting
 6. **Hybrid Models:**
-   - **Hybrid `ARMA(2,1) + Random Forest` (Residual Learning):** ARMA models linear temporal autocorrelation; Random Forest predicts the non-linear ARMA residuals from multivariate weather predictors.
-   - **Hybrid `Random Forest + ANN`:** Blends step-function tree predictions with smooth neural-network predictions.
-7. **Stacking Ensemble:** Combines 6 diverse base learners (`Random Forest`, `Extra Trees`, `XGBoost`, `LightGBM`, `CatBoost`, `ANN`) using 5-fold temporal-block out-of-fold predictions into a non-negative **Ridge Regression** meta-learner.
+   - **Hybrid `ARMA(2,1) + Random Forest` (Residual Learning):** ARMA models multi-day rainy spells; Random Forest predicts the leftover ARMA errors using today's weather features.
+   - **Hybrid `Random Forest + ANN`:** Averages step-shaped tree predictions with smooth neural-network predictions.
+7. **Stacking Ensemble:** Combines 6 base models (`Random Forest`, `Extra Trees`, `XGBoost`, `LightGBM`, `CatBoost`, `ANN`) using 5-fold out-of-fold predictions into a non-negative **Ridge Regression** meta-learner.
 
 ---
 
