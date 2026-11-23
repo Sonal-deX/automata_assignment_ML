@@ -305,6 +305,6 @@ Badulla, Anuradhapura, Jaffna, Trincomalee, Batticaloa, Hambantota), 2015-2024, 
 
 **Files.** The full analysis is in `ensemble_rainfall_sri_lanka.ipynb`. Trained models are in `models/` as pickle files.
 
-**AI declaration.** Code and frontend generated with Claude via Antigravity, then reviewed and tested by me.
+**AI declaration.** Code and frontend partially generated with Claude via Antigravity, then reviewed and tested by me.
 The comparison and interpretation of the results are my own.
 """)
