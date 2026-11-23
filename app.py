@@ -1,9 +1,6 @@
 """
 Sri Lanka Rainfall Forecast - Ensemble Learning Dashboard
 Run locally:  streamlit run app.py
-
-AI declaration: this dashboard was generated with Claude (Anthropic) via the Google Antigravity
-coding assistant, and reviewed/tested by the student.
 """
 import json
 from pathlib import Path

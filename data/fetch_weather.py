@@ -8,8 +8,6 @@ Period : 2015-01-01 to 2024-12-31 (10 years, daily)
 
 Run:  python data/fetch_weather.py
 Output: data/raw/sri_lanka_weather_daily.csv
-
-(Script generated with Claude via Antigravity, reviewed by the student.)
 """
 import time
 from pathlib import Path

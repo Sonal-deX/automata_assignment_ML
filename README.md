@@ -7,10 +7,6 @@
 
 ---
 
-**AI declaration.** Code and frontend generated with Claude via Antigravity, then reviewed and tested by me. The comparison and interpretation of the results are my own.
-
----
-
 ## 1. Project Overview
 
 This project predicts **tomorrow's daily rainfall (in mm)** across **12 cities in Sri Lanka** covering all three climatic zones defined by the Department of Meteorology, Sri Lanka:
